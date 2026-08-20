@@ -28,7 +28,7 @@ app.config["SITE_NAME"] = "Dentist Directory"
 # Canonical host for sitemap/canonicals/OG. Override with env DOMAIN when a
 # custom domain is attached (no trailing slash).
 app.config["DOMAIN"] = os.environ.get(
-    "DOMAIN", "https://dentistsdirectory.vercel.app")
+    "DOMAIN", "https://nationaldentistdirectory.online")
 app.config["ADSENSE_CLIENT"] = os.environ.get("ADSENSE_CLIENT", "")  # ca-pub-XXXX
 app.config["GA_ID"] = os.environ.get("GA_ID", "")                    # G-XXXXXXXX
 # Google Search Console verification token (the string in the meta-tag method).
