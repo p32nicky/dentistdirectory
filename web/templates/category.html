@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, pager %}
+{% block title %}{{ name }} Services Near You ({{ total }}){% if pg.page>1 %} — Page {{ pg.page }}{% endif %} | {{ SITE_NAME }}{% endblock %}
+{% block description %}Find {{ name|lower }} pros near you. Compare {{ total }} practices with reviews and ratings. Read reviews and contact pros directly.{% endblock %}
+{% block canonical %}/category/{{ slug }}{% endblock %}
+{% block head_extra %}
+  {% if pg.has_prev %}<link rel="prev" href="{{ DOMAIN }}{{ base_url }}{% if pg.page>2 %}?page={{ pg.page-1 }}{% endif %}">{% endif %}
+  {% if pg.has_next %}<link rel="next" href="{{ DOMAIN }}{{ base_url }}?page={{ pg.page+1 }}">{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-br from-primary to-gradient text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <nav class="text-sm text-white/70 mb-3"><a href="/" class="hover:text-white">Home</a> / <a href="/categories" class="hover:text-white">Services</a> / <span class="text-white">{{ name }}</span></nav>
+    <h1 class="text-3xl md:text-4xl font-extrabold"><i class="fa-solid {{ CATEGORY_ICONS.get(name,'fa-bug') }} mr-2"></i>{{ name }}</h1>
+    <p class="mt-2 text-white/90">{{ total }} practices &middot; verified reviews &middot; call direct</p>
+  </div>
+</div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  {% if pg.page==1 %}
+  <div class="grid lg:grid-cols-3 gap-8 mb-10">
+    <div class="lg:col-span-2">
+      {% if copy and copy.intro %}<p class="text-gray-700 leading-relaxed">{{ copy.intro }}</p>{% endif %}
+    </div>
+    <aside>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 class="font-heading font-bold text-secondary mb-4">Quick facts</h2>
+        <dl class="space-y-2.5 text-sm">
+          <div class="flex justify-between"><dt class="text-gray-500">Providers</dt><dd class="font-semibold">{{ "{:,}".format(total) }}</dd></div>
+          {% if facts.avg %}<div class="flex justify-between"><dt class="text-gray-500">Avg rating</dt><dd class="font-semibold"><i class="fas fa-star text-amber-400"></i> {{ facts.avg }}</dd></div>{% endif %}
+          <div class="flex justify-between"><dt class="text-gray-500">Cities covered</dt><dd class="font-semibold">{{ facts.cities }}</dd></div>
+          <div class="flex justify-between"><dt class="text-gray-500">Total reviews</dt><dd class="font-semibold">{{ "{:,}".format(facts.reviews) }}</dd></div>
+        </dl>
+        {% if facts.top_cities %}
+        <h3 class="font-semibold text-sm mt-5 mb-2 text-gray-700">Top cities</h3>
+        <ul class="space-y-1.5 text-sm">
+          {% for c in facts.top_cities %}<li class="flex justify-between"><a href="/{{ c.state|lower }}/{{ cat_slug(c.city) }}" class="text-primary hover:underline">{{ c.city }}, {{ c.state }}</a><span class="text-gray-400">{{ c.n }}</span></li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+  {% endif %}
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">{% for l in rows %}{{ card(l) }}{% endfor %}</div>
+  {{ pager(pg, base_url) }}
+  {% if copy and copy.faq and pg.page==1 %}
+  <h2 class="text-2xl font-extrabold mt-14 mb-4">{{ name }} — FAQ</h2>
+  <div class="space-y-3 max-w-3xl">{% for f in copy.faq %}<details class="bg-white border rounded-xl p-4"><summary class="font-semibold cursor-pointer">{{ f.q }}</summary><p class="mt-2 text-gray-600 text-sm">{{ f.a }}</p></details>{% endfor %}</div>
+  {% endif %}
+</div>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Home","item":"{{ DOMAIN }}/"},
+{"@type":"ListItem","position":2,"name":"Services","item":"{{ DOMAIN }}/categories"},
+{"@type":"ListItem","position":3,"name":{{ name|tojson }},"item":"{{ DOMAIN }}/category/{{ slug }}"}]}
+</script>
+{% if copy and copy.faq %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{% for f in copy.faq %}{"@type":"Question","name":{{ f.q|tojson }},"acceptedAnswer":{"@type":"Answer","text":{{ f.a|tojson }}}}{{ "," if not loop.last }}{% endfor %}]}
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card %}
+{% block title %}Dentists in {{ name }} ({{ total }} pros) | {{ SITE_NAME }}{% endblock %}
+{% block description %}Find dentists & dentists across {{ name }}. Browse {{ total }} practices in {{ cities|length }} cities with reviews and ratings.{% endblock %}
+{% block canonical %}/state/{{ st|lower }}{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-br from-primary to-gradient text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <nav class="text-sm text-white/70 mb-3"><a href="/" class="hover:text-white">Home</a> / <a href="/cities" class="hover:text-white">States</a> / <span class="text-white">{{ name }}</span></nav>
+    <h1 class="text-3xl md:text-4xl font-extrabold">Dentists in {{ name }}</h1>
+    <p class="mt-2 text-white/90">{{ total }} practices across {{ cities|length }} cities</p>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <h2 class="text-xl font-bold text-gray-900 mb-5">Cities in {{ name }}</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-12">
+    {% for c in cities %}
+    <a href="/{{ st|lower }}/{{ cat_slug(c.city) }}" class="flex justify-between items-center px-4 py-2.5 bg-white border rounded-lg hover:border-primary hover:text-primary text-sm">
+      <span>{{ c.city }}</span><span class="text-gray-400">{{ c.n }}</span></a>
+    {% endfor %}
+  </div>
+
+  <h2 class="text-xl font-bold text-gray-900 mb-5">Top-rated in {{ name }}</h2>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">{% for l in top %}{{ card(l) }}{% endfor %}</div>
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Home","item":"{{ DOMAIN }}/"},
+{"@type":"ListItem","position":2,"name":"States","item":"{{ DOMAIN }}/cities"},
+{"@type":"ListItem","position":3,"name":{{ name|tojson }},"item":"{{ DOMAIN }}/state/{{ st|lower }}"}]}
+</script>
+{% endblock %}

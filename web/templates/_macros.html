@@ -1,0 +1,83 @@
+{% macro stars(rating) %}
+  {% set r = rating or 0 %}
+  {% for i in range(1,6) %}
+    {% if r >= i %}<i class="fas fa-star text-amber-400"></i>
+    {% elif r >= i-0.5 %}<i class="fas fa-star-half-stroke text-amber-400"></i>
+    {% else %}<i class="far fa-star text-amber-300"></i>{% endif %}
+  {% endfor %}
+{% endmacro %}
+
+{% macro pager(pg, base_url) %}
+{% set sep = '&' if '?' in base_url else '?' %}
+{% if pg.pages > 1 %}
+<nav class="flex items-center justify-center gap-2 mt-10" aria-label="Pagination">
+  {% if pg.has_prev %}<a href="{{ base_url }}{{ sep }}page={{ pg.page-1 }}" class="px-4 py-2 rounded-lg border bg-white text-gray-700 hover:border-primary hover:text-primary text-sm">&larr; Prev</a>{% endif %}
+  <span class="px-4 py-2 text-sm text-gray-500">Page {{ pg.page }} of {{ pg.pages }}</span>
+  {% if pg.has_next %}<a href="{{ base_url }}{{ sep }}page={{ pg.page+1 }}" class="px-4 py-2 rounded-lg border bg-white text-gray-700 hover:border-primary hover:text-primary text-sm">Next &rarr;</a>{% endif %}
+</nav>
+{% endif %}
+{% endmacro %}
+
+{% macro card(l) %}
+<!-- Logo Compact Card Layout (reference clone) -->
+<div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100">
+  <div class="p-4">
+    <div class="flex items-start space-x-4">
+      <!-- Logo -->
+      <div class="flex-shrink-0">
+        {% if l.website %}
+        <img src="https://www.google.com/s2/favicons?domain={{ l.website }}&sz=128" alt="{{ l.name }} logo"
+             class="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-gray-50 p-1"
+             onerror="this.outerHTML='<div class=&quot;w-16 h-16 rounded-lg border border-gray-200 bg-primary/10 text-primary flex items-center justify-center&quot;><i class=&quot;fa-solid fa-tooth text-xl&quot;></i></div>'">
+        {% else %}
+        <div class="w-16 h-16 rounded-lg border border-gray-200 bg-primary/10 text-primary flex items-center justify-center"><i class="fa-solid fa-tooth text-xl"></i></div>
+        {% endif %}
+      </div>
+      <!-- Content -->
+      <div class="flex-1 min-w-0">
+        <div class="flex items-start mb-2">
+          <h3 class="text-lg font-heading font-semibold text-gray-900 flex-1 min-w-0 mr-3">
+            <a href="/listing/{{ l.slug }}" class="hover:text-primary block truncate">{{ l.name }}</a>
+          </h3>
+          {% if l.rating and l.rating >= 4.8 %}
+          <span class="bg-primary text-white px-2 py-1 rounded-full text-xs font-medium flex-shrink-0">
+            <i class="fas fa-star mr-1"></i><span class="hidden sm:inline">Top Rated</span></span>
+          {% endif %}
+        </div>
+        <!-- Location -->
+        <p class="text-sm text-gray-600 flex items-center mb-2">
+          <i class="fas fa-map-marker-alt mr-1 text-primary"></i>
+          <a href="/{{ l.state|lower }}/{{ l.city|slugify }}" class="hover:text-primary hover:underline">{{ l.city }}, {{ l.state }}</a>
+        </p>
+        <!-- Description -->
+        <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+          {{ l.category or 'Dentists' }} services in {{ l.city }}, {{ l.state }}. Trusted local dentists offering inspections, treatment and prevention. Call for service and fast response.
+        </p>
+        <!-- Contact + metrics -->
+        <div class="flex items-center justify-between text-xs mb-3">
+          <div class="flex items-center space-x-4">
+            {% if l.phone %}
+            <a href="tel:{{ l.phone|trim }}" class="flex items-center group transition-all duration-200 hover:text-emerald-600">
+              <div class="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center mr-2 group-hover:bg-emerald-100">
+                <i class="fas fa-phone text-xs text-emerald-500"></i></div>
+              <span class="hidden sm:inline text-gray-700 group-hover:text-emerald-600 font-medium">{{ l.phone|trim }}</span>
+            </a>
+            {% endif %}
+            {% if l.reviews %}
+            <div class="flex items-center text-gray-500">
+              <div class="w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center mr-2"><i class="fas fa-star text-xs text-amber-400"></i></div>
+              <span>{{ "%.1f"|format(l.rating) }} ({{ l.reviews }})</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Category badge + View -->
+        <div class="flex items-center justify-between">
+          {% if l.category %}<span class="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-medium">{{ l.category }}</span>{% else %}<span></span>{% endif %}
+          <a href="/listing/{{ l.slug }}" class="text-primary font-semibold text-sm hover:underline">View <i class="fas fa-arrow-right text-xs ml-0.5"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}

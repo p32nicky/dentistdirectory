@@ -1,0 +1,4 @@
+# Scraper deps (used by the GitHub Actions scrape workflow, NOT the web host).
+playwright==1.48.0
+playwright-stealth==1.0.6
+tenacity==9.0.0

@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+scraper/scrape.py
+scraper/export.py
+scraper/clean.py
+scraper/targets.py
+data/us-cities.csv
+data/*.json
+data/*.csv
+proxies.txt*
+.github/
+requirements-scrape.txt
+requirements-web.txt
+Dockerfile
+Procfile
+render.yaml

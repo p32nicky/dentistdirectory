@@ -1,0 +1,8 @@
+# Never apply text/CRLF conversion to binary assets.
+*.db binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.ogg binary
