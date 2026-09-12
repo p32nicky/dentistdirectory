@@ -93,15 +93,21 @@ def gemini(prompt: str) -> dict:
     fn = _groq if GROQ_KEY else _gemini
     if not (GROQ_KEY or GEMINI_KEY):
         raise RuntimeError("No GROQ_API_KEY or GEMINI_API_KEY set")
-    for attempt in range(5):
+    # 429 = rate limit; 400/403 = transient Cloudflare/load blocks; 5xx = server.
+    RETRYABLE = {400, 403, 408, 429, 500, 502, 503, 529}
+    for attempt in range(8):
         try:
             return fn(prompt)
         except urllib.error.HTTPError as e:
-            if e.code == 429 and attempt < 4:
-                wait = int(e.headers.get("retry-after", 0)) or (10 * (attempt + 1))
-                print(f"    429 rate limit — waiting {wait}s")
+            if e.code in RETRYABLE and attempt < 7:
+                wait = int(e.headers.get("retry-after", 0)) or (5 * (attempt + 1))
+                print(f"    {e.code} — retrying in {wait}s")
                 time.sleep(wait)
                 continue
+            raise
+        except (urllib.error.URLError, TimeoutError):
+            if attempt < 7:
+                time.sleep(5 * (attempt + 1)); continue
             raise
 
 
