@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import card, pager %}
-{% block title %}Dentists in {{ city }}, {{ state }} ({{ total }} pros){% if pg.page>1 %} — Page {{ pg.page }}{% endif %} | {{ SITE_NAME }}{% endblock %}
+{% block title %}Top-Rated Dentists in {{ city }}, {{ state }} — {{ total }} Local Dentists{% if pg.page>1 %} (Page {{ pg.page }}){% endif %} | {{ SITE_NAME }}{% endblock %}
 {% block description %}Compare {{ total }} top-rated dentists & dentist services in {{ city }}, {{ state }}. Reviews, phone numbers, and direct contact.{% endblock %}
 {% block canonical %}/{{ state|lower }}/{{ cat_slug(city) }}{% endblock %}
 {% block head_extra %}

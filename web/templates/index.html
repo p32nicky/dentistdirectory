@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import card %}
+{% block title %}Find a Dentist Near You — {{ "{:,}".format(total) }}+ Top-Rated Dentists | {{ SITE_NAME }}{% endblock %}
+{% block description %}Search {{ "{:,}".format(total) }}+ dentists across the US. Compare general dentists, orthodontists, oral surgeons, pediatric dentists and more by reviews, ratings and location. Find your dentist today.{% endblock %}
 {% block canonical %}/{% endblock %}
 
 {% block content %}

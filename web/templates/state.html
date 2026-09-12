@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import card %}
-{% block title %}Dentists in {{ name }} ({{ total }} pros) | {{ SITE_NAME }}{% endblock %}
+{% block title %}Top-Rated Dentists in {{ name }} — {{ "{:,}".format(total) }} Local Dentists | {{ SITE_NAME }}{% endblock %}
 {% block description %}Find dentists & dentists across {{ name }}. Browse {{ total }} practices in {{ cities|length }} cities with reviews and ratings.{% endblock %}
 {% block canonical %}/state/{{ st|lower }}{% endblock %}
 
