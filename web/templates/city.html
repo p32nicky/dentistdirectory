@@ -13,7 +13,8 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <nav class="text-sm text-white/70 mb-3"><a href="/" class="hover:text-white">Home</a> / <a href="/state/{{ state|lower }}" class="hover:text-white">{{ STATE_NAMES.get(state, state) }}</a> / <span class="text-white">{{ city }}, {{ state }}</span></nav>
     <h1 class="text-3xl md:text-4xl font-extrabold">Dentists in {{ city }}, {{ state }}</h1>
-    <p class="mt-2 text-white/90">{{ total }} trusted local dentists &middot; verified reviews &middot; call direct</p>
+    <p class="mt-2 text-white/90">{{ total }} local dentists{% if specialty_breakdown %} across {{ specialty_breakdown|length }} specialties{% endif %} &middot; verified reviews &middot; call direct</p>
+    {% if last_updated %}<p class="text-xs text-white/60 mt-2">Last updated {{ last_updated }}</p>{% endif %}
   </div>
 </div>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -47,6 +48,48 @@
   {% endif %}
   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">{% for l in rows %}{{ card(l) }}{% endfor %}</div>
   {{ pager(pg, base_url) }}
+
+  {% if pg.page==1 %}
+  {% if specialty_breakdown and specialty_breakdown|length > 1 %}
+  <section class="mt-14">
+    <h2 class="text-2xl font-extrabold mb-3">Dental specialties in {{ city }}</h2>
+    <p class="text-gray-600 mb-5 max-w-3xl">Browse {{ city }} dentists by the type of care you need. Averages below reflect public patient ratings for each specialty in {{ city }}.</p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {% for s in specialty_breakdown %}
+      <a href="/category/{{ cat_slug(s.cat) }}" class="bg-white border rounded-xl p-4 hover:border-primary hover:shadow-sm transition-all">
+        <div class="flex items-center gap-2 font-semibold text-gray-900 text-sm"><i class="fa-solid {{ CATEGORY_ICONS.get(s.cat,'fa-tooth') }} text-primary/70"></i> {{ s.cat }}</div>
+        <div class="text-xs text-gray-500 mt-1.5">{{ s.n }} practice{{ 's' if s.n != 1 }}{% if s.avg %} &middot; <i class="fas fa-star text-amber-400"></i> {{ s.avg }} avg{% endif %}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if areas and areas|length > 2 %}
+  <section class="mt-12">
+    <h2 class="text-2xl font-extrabold mb-3">Dentists by area in {{ city }}</h2>
+    <p class="text-gray-600 mb-5 max-w-3xl">{{ city }} dental practices span several ZIP codes. The areas with the most listed dentists:</p>
+    <div class="flex flex-wrap gap-2">
+      {% for zip, n in areas %}
+      <span class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600"><i class="fas fa-location-dot text-primary/60 text-xs"></i> {{ zip }} <span class="text-gray-400">({{ n }})</span></span>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="mt-12 bg-gray-50 border border-gray-200 rounded-2xl p-6 max-w-3xl">
+    <h2 class="text-xl font-bold text-gray-900 mb-3">How to choose a dentist in {{ city }}</h2>
+    <p class="text-gray-700 text-sm leading-relaxed mb-3">{{ city }} has {{ total }} dentist{{ 's' if total != 1 }} listed{% if specialty_breakdown %} across {{ specialty_breakdown|length }} specialties{% endif %}{% if facts.avg %}, with an average public rating of {{ facts.avg }} out of 5{% endif %}. A few things to weigh when narrowing down:</p>
+    <ul class="text-gray-700 text-sm space-y-2 list-disc pl-5">
+      <li><strong>Match the specialty to your need</strong> — a general dentist for checkups and fillings, an orthodontist for braces or aligners, an oral surgeon for extractions or implants, or an emergency dentist for urgent pain.</li>
+      <li><strong>Read recent reviews</strong> — look for consistent comments on bedside manner, wait times and billing, not just the star average.</li>
+      <li><strong>Confirm insurance and pricing</strong> — accepted plans vary by office, so call ahead before booking. Medicaid dental coverage for adults also varies by state.</li>
+      <li><strong>Factor in location</strong> — a conveniently located practice makes routine cleanings and follow-ups easier to keep.</li>
+    </ul>
+    <p class="text-xs text-gray-400 mt-4">General guidance only, not professional advice. See our <a href="/methodology" class="underline">methodology</a>.</p>
+  </section>
+  {% endif %}
+
   {% if copy and copy.faq and pg.page==1 %}
   <h2 class="text-2xl font-extrabold mt-14 mb-4">Dentists in {{ city }} — FAQ</h2>
   <div class="space-y-3 max-w-3xl">{% for f in copy.faq %}<details class="bg-white border rounded-xl p-4"><summary class="font-semibold cursor-pointer">{{ f.q }}</summary><p class="mt-2 text-gray-600 text-sm">{{ f.a }}</p></details>{% endfor %}</div>

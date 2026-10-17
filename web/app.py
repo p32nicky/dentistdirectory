@@ -390,22 +390,41 @@ def city(state, cityslug):
     paged = rows[(page - 1) * PER_PAGE: page * PER_PAGE]
     copy = content_for(f"city:{cityslug}-{state.lower()}")
     rated = [r["rating"] for r in rows if r["rating"] is not None]
-    svc = {}
+    # specialty breakdown with per-specialty average rating (unique per city)
+    spec = {}
     for r in rows:
         if r["category"]:
-            svc[r["category"]] = svc.get(r["category"], 0) + 1
+            v = spec.setdefault(r["category"], {"n": 0, "sum": 0.0, "rated": 0})
+            v["n"] += 1
+            if r["rating"] is not None:
+                v["sum"] += r["rating"]; v["rated"] += 1
+    specialty_breakdown = sorted(
+        [{"cat": k, "n": v["n"],
+          "avg": round(v["sum"] / v["rated"], 1) if v["rated"] else None}
+         for k, v in spec.items()], key=lambda x: -x["n"])
+    # group by ZIP code parsed from the address (unique "areas" data)
+    zc = {}
+    for r in rows:
+        if r["address"]:
+            m = re.search(r"\b(\d{5})(?:-\d{4})?\b", r["address"])
+            if m:
+                zc[m.group(1)] = zc.get(m.group(1), 0) + 1
+    areas = sorted(zc.items(), key=lambda x: -x[1])[:12]
+    last_updated = max((r["scraped_at"] or "" for r in rows), default="")[:10]
     facts = {"avg": round(sum(rated) / len(rated), 1) if rated else None,
              "reviews": sum(r["reviews"] or 0 for r in rows),
              "top": rows[0],
-             "services": sorted(svc.items(), key=lambda x: -x[1])}
+             "services": [(s["cat"], s["n"]) for s in specialty_breakdown]}
     md = meta_desc(
         copy["intro"] if copy else None,
-        f"Compare {total} top-rated dentists in {cname}, {state}. Real patient "
-        f"reviews, ratings, hours and phone numbers — find and call a local "
-        f"dentist today.")
+        f"Compare {total} dentists in {cname}, {state} by specialty, patient "
+        f"rating and location. See reviews and phone numbers, then call a local "
+        f"dentist directly.")
     return render_template("city.html", city=cname, state=state, rows=paged,
                            total=total, copy=copy, pg=_pageinfo(page, total),
                            facts=facts, meta_description=md,
+                           specialty_breakdown=specialty_breakdown, areas=areas,
+                           last_updated=last_updated,
                            base_url=f"/{state.lower()}/{cityslug}")
 
 
