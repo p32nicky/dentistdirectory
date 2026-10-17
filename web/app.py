@@ -121,6 +121,30 @@ def content_for(key):
             "faq": json.loads(row["faq"]) if row["faq"] else []}
 
 
+def meta_desc(intro, fallback, limit=155):
+    """Build a meta description from LLM copy.intro (HTML stripped, truncated
+    on a word boundary) and fall back to an action-oriented default."""
+    if intro:
+        text = re.sub(r"<[^>]+>", "", intro)        # strip any HTML tags
+        text = re.sub(r"\s+", " ", text).strip()
+        if len(text) > limit:
+            text = text[:limit].rsplit(" ", 1)[0].rstrip(" ,.;:—-") + "…"
+        return text
+    return fallback
+
+
+# High-impression city pages (from Search Console) — link equity targets.
+# (state_code, city_slug, "City, ST")
+HIGH_IMPRESSION_CITIES = [
+    ("az", "phoenix", "Phoenix, AZ"),
+    ("ca", "san-francisco", "San Francisco, CA"),
+    ("co", "colorado-springs", "Colorado Springs, CO"),
+    ("ca", "los-angeles", "Los Angeles, CA"),
+    ("tx", "fort-worth", "Fort Worth, TX"),
+    ("tx", "houston", "Houston, TX"),
+]
+
+
 # ---------------------------------------------------------------- context
 @app.context_processor
 def inject_globals():
@@ -214,9 +238,15 @@ def category(slug):
         "GROUP BY city, state ORDER BY n DESC LIMIT 5", (name,)).fetchall()
     facts = {"avg": stats["avg"], "cities": stats["cities"],
              "reviews": stats["revs"] or 0, "top_cities": top_cities}
+    md = meta_desc(
+        copy["intro"] if copy else None,
+        f"Compare {total:,} top-rated {name.lower()} practices near you. Verified "
+        f"reviews, ratings and locations — find and call the right dentist "
+        f"today.")
     return render_template("category.html", name=name, slug=slug, rows=rows,
                            total=total, copy=copy, pg=_pageinfo(page, total),
-                           facts=facts, base_url=f"/category/{slug}")
+                           facts=facts, meta_description=md,
+                           base_url=f"/category/{slug}")
 
 
 @app.route("/<state>/<cityslug>")
@@ -244,9 +274,15 @@ def city(state, cityslug):
              "reviews": sum(r["reviews"] or 0 for r in rows),
              "top": rows[0],
              "services": sorted(svc.items(), key=lambda x: -x[1])}
+    md = meta_desc(
+        copy["intro"] if copy else None,
+        f"Compare {total} top-rated dentists in {cname}, {state}. Real patient "
+        f"reviews, ratings, hours and phone numbers — find and call a local "
+        f"dentist today.")
     return render_template("city.html", city=cname, state=state, rows=paged,
                            total=total, copy=copy, pg=_pageinfo(page, total),
-                           facts=facts, base_url=f"/{state.lower()}/{cityslug}")
+                           facts=facts, meta_description=md,
+                           base_url=f"/{state.lower()}/{cityslug}")
 
 
 @app.route("/state/<st>")
@@ -304,7 +340,8 @@ def guide(slug):
     others = get_db().execute(
         "SELECT slug, title FROM guides WHERE slug != ? ORDER BY RANDOM() LIMIT 6",
         (slug,)).fetchall()
-    return render_template("guide.html", g=row, body=body, others=others)
+    return render_template("guide.html", g=row, body=body, others=others,
+                           rec_cities=HIGH_IMPRESSION_CITIES[:3])
 
 
 @app.route("/search")

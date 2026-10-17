@@ -39,8 +39,21 @@
   </section>
   {% endif %}
 
+  {% if rec_cities %}
+  <section class="mt-12 bg-gray-50 border border-gray-200 rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-gray-900 mb-1">Find a dentist in a top city</h2>
+    <p class="text-sm text-gray-500 mb-4">Browse trusted local dentists in these popular areas.</p>
+    <div class="grid sm:grid-cols-3 gap-3">
+      {% for st, cslug, label in rec_cities %}
+      <a href="/{{ st }}/{{ cslug }}" class="flex items-center gap-2 bg-white border rounded-lg px-4 py-3 text-sm font-medium hover:border-primary hover:text-primary">
+        <i class="fas fa-location-dot text-primary/60"></i> Dentists in {{ label }}</a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   {% if others %}
-  <h2 class="text-xl font-bold text-gray-900 mb-4">More guides</h2>
+  <h2 class="text-xl font-bold text-gray-900 mb-4 mt-12">More guides</h2>
   <div class="grid sm:grid-cols-2 gap-3">
     {% for o in others %}<a href="/guides/{{ o.slug }}" class="flex items-center gap-2 bg-white border rounded-lg px-4 py-3 text-sm hover:border-primary hover:text-primary"><i class="fas fa-book text-primary/60"></i> {{ o.title }}</a>{% endfor %}
   </div>
