@@ -2,7 +2,7 @@
 {% from "_macros.html" import card, pager %}
 {% block title %}{{ name }}s Near You — {{ "{:,}".format(total) }} Top-Rated {{ name }}s{% if pg.page>1 %} (Page {{ pg.page }}){% endif %} | {{ SITE_NAME }}{% endblock %}
 {% block description %}{{ meta_description }}{% endblock %}
-{% block canonical %}/category/{{ slug }}{% endblock %}
+{% block canonical %}{{ DOMAIN }}{{ base_url }}{% if pg.page > 1 %}?page={{ pg.page }}{% endif %}{% endblock %}
 {% block head_extra %}
   {% if pg.has_prev %}<link rel="prev" href="{{ DOMAIN }}{{ base_url }}{% if pg.page>2 %}?page={{ pg.page-1 }}{% endif %}">{% endif %}
   {% if pg.has_next %}<link rel="next" href="{{ DOMAIN }}{{ base_url }}?page={{ pg.page+1 }}">{% endif %}
@@ -63,7 +63,7 @@
 {% if rows %}
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"ItemList","name":{{ ("Top " ~ name ~ " practices")|tojson }},"itemListElement":[
-{% for l in rows[:5] %}{"@type":"ListItem","position":{{ loop.index }},"item":{"@type":"Dentist","name":{{ l.name|tojson }},"url":"{{ DOMAIN }}/listing/{{ l.slug }}"{% if l.rating %},"aggregateRating":{"@type":"AggregateRating","ratingValue":"{{ l.rating }}","reviewCount":"{{ l.reviews or 0 }}"}{% endif %}}}{{ "," if not loop.last }}{% endfor %}]}
+{% for l in rows[:10] %}{"@type":"ListItem","position":{{ loop.index }},"item":{"@type":"Dentist","name":{{ l.name|tojson }},"url":"{{ DOMAIN }}/listing/{{ l.slug }}"}}{{ "," if not loop.last }}{% endfor %}]}
 </script>
 {% endif %}
 {% endblock %}

@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT / "scraper"))
 import db as dbmod  # noqa: E402  (schema + slugify live here)
 
 app = Flask(__name__)
-app.config["SITE_NAME"] = "Dentist Directory"
+app.config["SITE_NAME"] = "National Dentist Directory"
 # Canonical host for sitemap/canonicals/OG. Override with env DOMAIN when a
 # custom domain is attached (no trailing slash).
 app.config["DOMAIN"] = os.environ.get(
@@ -61,6 +61,92 @@ CATEGORY_ICONS = {
     "Emergency Dentist": "fa-kit-medical",
 }
 
+# Evergreen, patient-useful explainer for each specialty. Informational only
+# (not medical advice). Surfaced on listing pages to add genuine unique value.
+SPECIALTY_INFO = {
+    "General Dentist": "General dentists are the primary providers of oral care for patients of all ages. They handle routine checkups, cleanings, fillings, crowns, extractions and gum care, and coordinate referrals to specialists when more advanced treatment is needed. Most families see a general dentist every six months for preventive care.",
+    "Cosmetic Dentist": "Cosmetic dentists focus on improving the appearance of teeth, gums and smiles. Common treatments include teeth whitening, porcelain veneers, bonding, tooth-colored fillings and smile makeovers. Many cosmetic procedures also restore function, so an initial consultation usually reviews both aesthetic goals and overall oral health.",
+    "Orthodontist": "Orthodontists specialize in correcting the alignment of teeth and jaws. They diagnose and treat crowding, gaps, overbites and underbites using braces, clear aligners and retainers. Treatment plans vary by age and complexity, and many practices offer free consultations to review options for children, teens and adults.",
+    "Pediatric Dentist": "Pediatric dentists care for the dental health of infants, children and teenagers, including kids with special needs. They provide cleanings, fluoride treatments, sealants, cavity care and guidance on habits like thumb-sucking, in a child-friendly environment designed to make early visits comfortable.",
+    "Oral Surgeon": "Oral and maxillofacial surgeons perform surgical procedures of the mouth, jaw and face. Common treatments include wisdom tooth removal, dental implant placement, corrective jaw surgery and treatment of facial trauma. A referral from a general dentist is often the first step.",
+    "Endodontist": "Endodontists specialize in diagnosing and treating problems inside the tooth, most commonly performing root canal treatment to save teeth affected by deep decay or infection. They also handle cracked teeth and retreatment of previous root canals, often using advanced imaging and microscopes.",
+    "Periodontist": "Periodontists specialize in preventing, diagnosing and treating gum disease and in placing dental implants. Services include deep cleanings (scaling and root planing), gum grafts, periodontal surgery and ongoing maintenance for patients with gum recession or bone loss around the teeth.",
+    "Emergency Dentist": "Emergency dentists provide urgent care for dental problems that can't wait, such as severe toothaches, knocked-out or broken teeth, lost fillings, abscesses and swelling. Many offer same-day or after-hours appointments. If you have severe facial swelling or difficulty breathing, seek emergency medical care first.",
+}
+
+# --- Index-worthiness gate (recovery from scaled-content demotion) ----------
+# Only substantial listings are indexed + put in the sitemap. The rest still
+# render and link internally, but carry noindex,follow so they don't dilute
+# site quality. Tune via env as recovery progresses.
+INDEX_MIN_REVIEWS = int(os.environ.get("INDEX_MIN_REVIEWS", "750"))
+
+
+def is_indexable(row):
+    try:
+        return bool(row["rating"] is not None
+                    and row["website"]
+                    and row["reviews"] is not None
+                    and row["reviews"] >= INDEX_MIN_REVIEWS)
+    except Exception:
+        return False
+
+
+# --- E-E-A-T trust pages (YMYL) ---------------------------------------------
+CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "contact@nationaldentistdirectory.online")
+
+TRUST_PAGES = {
+    "about": {
+        "title": "About National Dentist Directory",
+        "intro": "National Dentist Directory helps patients across the United States find and compare local dental practices by location, specialty and patient ratings.",
+        "sections": [
+            ("Our mission", "<p>Finding the right dentist shouldn't be hard. We organize publicly available information about dental practices &mdash; location, specialty, contact details and patient ratings &mdash; into clean, easy-to-browse pages so you can quickly shortlist practices near you and contact them directly.</p>"),
+            ("What we are (and aren't)", "<p>We are an independent directory. We are not a dental practice, we do not provide dental care, and we are not affiliated with or endorsed by the practices listed. Listings are informational. We do not accept payment to rank one practice above another.</p>"),
+            ("How our data is sourced", "<p>Practice details &mdash; name, address, phone, website, specialty, and star ratings &mdash; are compiled from public business listings, primarily public Google Business Profiles. Ratings and review counts reflect those public sources at the time of our last update and are not reviews collected by this site. Always confirm current services, hours and insurance with the office directly. See our <a href='/methodology'>methodology</a> for details.</p>"),
+            ("Contact us", "<p>Questions, corrections or removal requests? Email <a href='mailto:" + CONTACT_EMAIL + "'>" + CONTACT_EMAIL + "</a> and we'll respond. See our <a href='/contact'>contact page</a>.</p>"),
+        ],
+    },
+    "methodology": {
+        "title": "How We Compile & Rank Dentists",
+        "intro": "Transparency about where our data comes from, how listings are ordered, and the limits of that data.",
+        "sections": [
+            ("Data sources", "<p>Each listing is built from publicly available business information, chiefly public Google Business Profiles. We record the practice name, address, phone number, website, specialty category, geographic coordinates, and the public star rating and review count.</p>"),
+            ("How listings are ordered", "<p>By default, practices on city and category pages are ordered by number of public reviews (a proxy for how established and frequently-visited a practice is), then by rating. This is an automated ordering, not an editorial endorsement or a measure of clinical quality. You can compare practices and read their reviews on Google before deciding.</p>"),
+            ("What ratings mean", "<p>Star ratings and review counts are aggregated from public sources and reflect patient-submitted feedback on those platforms &mdash; not reviews submitted to this website. They are a starting point, not a substitute for your own research or a professional recommendation.</p>"),
+            ("Update frequency &amp; verification", "<p>Listing data is refreshed periodically and each page shows a &lsquo;last updated&rsquo; date. Information can change between updates, so we recommend confirming hours, services and insurance acceptance with the practice directly before visiting.</p>"),
+            ("Limitations", "<p>We don't list every practice, data can be incomplete or out of date, and a listing is not a recommendation. If you spot an error or want a listing updated or removed, contact us.</p>"),
+        ],
+    },
+    "editorial-policy": {
+        "title": "Editorial Policy",
+        "intro": "How our guides and informational content are created, reviewed and corrected.",
+        "sections": [
+            ("Purpose &amp; scope", "<p>Our guides provide general, educational information about dental topics to help patients understand common procedures and make informed decisions. They are <strong>not medical advice</strong> and do not replace a consultation with a licensed dentist.</p>"),
+            ("How content is produced", "<p>Informational guides are drafted with the assistance of AI language models and then reviewed and edited by our editorial team for accuracy, clarity and usefulness before publishing. We aim to keep guidance consistent with widely accepted dental health information from reputable public health sources.</p>"),
+            ("Review &amp; accuracy", "<p>Each guide shows a last-reviewed date. We welcome corrections: if you believe something is inaccurate, email <a href='mailto:" + CONTACT_EMAIL + "'>" + CONTACT_EMAIL + "</a> and we will review and update it.</p>"),
+            ("Medical disclaimer", "<p>Content on this site is for general information only. For diagnosis, treatment, or any health concern, consult a licensed dentist or physician. In a dental emergency with severe swelling or difficulty breathing, seek emergency medical care.</p>"),
+        ],
+    },
+    "contact": {
+        "title": "Contact Us",
+        "intro": "We'd love to hear from you.",
+        "sections": [
+            ("Email", "<p>For general questions, corrections, listing updates or removal requests, email <a href='mailto:" + CONTACT_EMAIL + "'><strong>" + CONTACT_EMAIL + "</strong></a>. We read every message and aim to respond within a few business days.</p>"),
+            ("For dental practices", "<p>If you own or manage a practice listed here and would like to correct your information or request removal, email us from an address associated with the practice and we'll take care of it.</p>"),
+            ("Important", "<p>We are a directory and cannot book appointments, answer clinical questions, or contact practices on your behalf. To make an appointment, please call the practice directly using the phone number on its listing.</p>"),
+        ],
+    },
+    "privacy": {
+        "title": "Privacy Policy",
+        "intro": "How this website handles information.",
+        "sections": [
+            ("Information we collect", "<p>We do not require you to create an account or submit personal information to browse this directory. Standard server logs and privacy-respecting analytics may record non-identifying usage data (such as pages viewed and approximate region) to help us improve the site.</p>"),
+            ("Cookies &amp; analytics", "<p>We may use cookies and third-party analytics or advertising services. These may set their own cookies subject to their privacy policies. You can control cookies through your browser settings.</p>"),
+            ("Third-party links", "<p>Listings link to practices' own websites and to Google Maps. We are not responsible for the content or privacy practices of those external sites.</p>"),
+            ("Contact", "<p>Questions about privacy? Email <a href='mailto:" + CONTACT_EMAIL + "'>" + CONTACT_EMAIL + "</a>.</p>"),
+        ],
+    },
+}
+
 
 # ---------------------------------------------------------------- db helpers
 def get_db():
@@ -80,12 +166,19 @@ def close_db(_exc):
         d.close()
 
 
+# Query params that create duplicate/filter URLs Google should not index.
+_NOINDEX_PARAMS = {"sort", "q", "category", "city"}
+
+
 @app.after_request
 def add_headers(resp):
-    """Edge caching + baseline security headers."""
+    """Edge caching, security headers, and crawl-control for param URLs."""
     if request.method == "GET" and resp.status_code == 200:
         resp.headers["Cache-Control"] = (
             "public, s-maxage=3600, stale-while-revalidate=86400")
+    # Keep filtered/search/sort permutations out of the index (crawl budget).
+    if any(p in request.args for p in _NOINDEX_PARAMS):
+        resp.headers["X-Robots-Tag"] = "noindex, follow"
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "SAMEORIGIN"
     resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -98,6 +191,7 @@ def add_headers(resp):
         "https://cdnjs.cloudflare.com; "
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
         "img-src 'self' data: https:; "
+        "frame-src https://www.google.com https://maps.google.com; "
         "connect-src 'self' https:; frame-ancestors 'self'")
     return resp
 
@@ -186,16 +280,46 @@ def home():
 
 @app.route("/listing/<slug>")
 def listing(slug):
-    row = get_db().execute(
+    d = get_db()
+    row = d.execute(
         "SELECT * FROM listings WHERE slug = ?", (slug,)).fetchone()
     if not row:
         abort(404)
-    nearby = get_db().execute(
+    nearby = d.execute(
         "SELECT * FROM listings WHERE city = ? AND state = ? AND slug != ? "
         "ORDER BY reviews DESC LIMIT 6",
         (row["city"], row["state"], slug)).fetchall()
+    # other dentist specialties available in the same city (internal linking)
+    other_specialties = d.execute(
+        "SELECT category, COUNT(*) n FROM listings WHERE city = ? AND state = ? "
+        "AND category IS NOT NULL AND category != ? GROUP BY category "
+        "ORDER BY n DESC", (row["city"], row["state"], row["category"])).fetchall()
     copy = content_for(f"listing:{slug}")
-    return render_template("listing.html", l=row, nearby=nearby, copy=copy)
+    specialty = SPECIALTY_INFO.get(row["category"])
+
+    # Data-driven FAQ (unique per listing, answered from real data) so every
+    # page has genuine Q&A content rather than one boilerplate sentence.
+    name, city, st = row["name"], row["city"], row["state"]
+    faq = []
+    if row["phone"]:
+        faq.append({"q": f"How do I contact {name}?",
+                    "a": f"You can reach {name} by phone at {row['phone']}. "
+                         f"The practice is located in {city}, {st}"
+                         + (f" at {row['address']}." if row["address"] else ".")})
+    if row["address"]:
+        faq.append({"q": f"Where is {name} located?",
+                    "a": f"{name} is located at {row['address']}. You can get "
+                         f"driving directions from the map on this page."})
+    faq.append({"q": f"What type of dentist is {name}?",
+                "a": f"{name} is listed as a {row['category']} serving patients "
+                     f"in {city}, {st}"
+                     + (f". {specialty}" if specialty else ".")})
+
+    last_updated = (row["scraped_at"] or "")[:10]
+    return render_template("listing.html", l=row, nearby=nearby, copy=copy,
+                           specialty=specialty, faq=faq,
+                           other_specialties=other_specialties,
+                           last_updated=last_updated, indexable=is_indexable(row))
 
 
 PER_PAGE = 24
@@ -344,6 +468,35 @@ def guide(slug):
                            rec_cities=HIGH_IMPRESSION_CITIES[:3])
 
 
+@app.route("/about")
+def about():
+    return render_template("trust.html", page=TRUST_PAGES["about"], slug="about")
+
+
+@app.route("/methodology")
+def methodology():
+    return render_template("trust.html", page=TRUST_PAGES["methodology"],
+                           slug="methodology")
+
+
+@app.route("/editorial-policy")
+def editorial_policy():
+    return render_template("trust.html", page=TRUST_PAGES["editorial-policy"],
+                           slug="editorial-policy")
+
+
+@app.route("/contact")
+def contact():
+    return render_template("trust.html", page=TRUST_PAGES["contact"],
+                           slug="contact")
+
+
+@app.route("/privacy")
+def privacy():
+    return render_template("trust.html", page=TRUST_PAGES["privacy"],
+                           slug="privacy")
+
+
 @app.route("/search")
 def search():
     from urllib.parse import urlencode
@@ -376,37 +529,98 @@ def search():
 
 
 # ---------------------------------------------------------------- SEO
-@app.route("/sitemap.xml")
-def sitemap():
-    from datetime import date
+def _d(v):
+    """Normalise a stored timestamp to a YYYY-MM-DD lastmod, or None."""
+    return v[:10] if v else None
+
+
+def _site_mod():
+    """A stable site-wide lastmod fallback (real data, not today())."""
     d = get_db()
-    base = app.config["DOMAIN"]
-    today = date.today().isoformat()
-    # (loc, priority, changefreq)
-    urls = [(base + "/", "1.0", "daily"),
-            (base + "/search", "0.5", "weekly"),
-            (base + "/cities", "0.7", "weekly"),
-            (base + "/categories", "0.7", "weekly")]
-    for r in d.execute("SELECT DISTINCT category FROM listings "
-                       "WHERE category IS NOT NULL"):
-        urls.append((f"{base}/category/{slugify(r['category'])}", "0.8", "weekly"))
-    urls.append((base + "/guides", "0.7", "weekly"))
-    for r in d.execute("SELECT slug FROM guides"):
-        urls.append((f"{base}/guides/{r['slug']}", "0.7", "monthly"))
-    for r in d.execute("SELECT DISTINCT state FROM listings"):
-        urls.append((f"{base}/state/{r['state'].lower()}", "0.7", "weekly"))
-    for r in d.execute("SELECT DISTINCT city, state FROM listings"):
-        urls.append((f"{base}/{r['state'].lower()}/{slugify(r['city'])}",
-                     "0.7", "weekly"))
-    for r in d.execute("SELECT slug FROM listings"):
-        urls.append((f"{base}/listing/{r['slug']}", "0.6", "monthly"))
+    try:
+        a = d.execute("SELECT MAX(generated_at) FROM content").fetchone()[0]
+        b = d.execute("SELECT MAX(scraped_at) FROM listings").fetchone()[0]
+        return _d(max(x for x in (a, b) if x)) or "2026-01-01"
+    except Exception:
+        return "2026-01-01"
+
+
+def _urlset(entries):
     xml = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for loc, pri, cf in urls:
-        xml.append(f"<url><loc>{loc}</loc><lastmod>{today}</lastmod>"
-                   f"<changefreq>{cf}</changefreq><priority>{pri}</priority></url>")
+    for loc, mod in entries:
+        xml.append(f"<url><loc>{loc}</loc>"
+                   + (f"<lastmod>{mod}</lastmod>" if mod else "") + "</url>")
     xml.append("</urlset>")
     return Response("\n".join(xml), mimetype="application/xml")
+
+
+@app.route("/sitemap.xml")
+def sitemap():
+    """Sitemap index — real, stable lastmod; excludes /search and thin listings."""
+    base = app.config["DOMAIN"]
+    mod = _site_mod()
+    children = ["sitemap-core.xml", "sitemap-cities.xml",
+                "sitemap-guides.xml", "sitemap-listings.xml"]
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for c in children:
+        xml.append(f"<sitemap><loc>{base}/{c}</loc>"
+                   f"<lastmod>{mod}</lastmod></sitemap>")
+    xml.append("</sitemapindex>")
+    return Response("\n".join(xml), mimetype="application/xml")
+
+
+@app.route("/sitemap-core.xml")
+def sitemap_core():
+    d = get_db(); base = app.config["DOMAIN"]; mod = _site_mod()
+    e = [(base + "/", mod), (base + "/about", mod),
+         (base + "/methodology", mod), (base + "/editorial-policy", mod),
+         (base + "/contact", mod), (base + "/privacy", mod),
+         (base + "/cities", mod), (base + "/categories", mod),
+         (base + "/guides", mod)]
+    for r in d.execute("SELECT DISTINCT category FROM listings WHERE category IS NOT NULL"):
+        key = f"category:{slugify(r['category'])}"
+        cm = _d(d.execute("SELECT generated_at FROM content WHERE key=?",
+                          (key,)).fetchone()[0] if d.execute(
+            "SELECT 1 FROM content WHERE key=?", (key,)).fetchone() else None) or mod
+        e.append((f"{base}/category/{slugify(r['category'])}", cm))
+    for r in d.execute("SELECT DISTINCT state FROM listings"):
+        e.append((f"{base}/state/{r['state'].lower()}", mod))
+    return _urlset(e)
+
+
+@app.route("/sitemap-cities.xml")
+def sitemap_cities():
+    d = get_db(); base = app.config["DOMAIN"]; mod = _site_mod()
+    e = []
+    for r in d.execute("SELECT DISTINCT city, state FROM listings"):
+        sl = slugify(r["city"]); key = f"city:{sl}-{r['state'].lower()}"
+        row = d.execute("SELECT generated_at FROM content WHERE key=?", (key,)).fetchone()
+        e.append((f"{base}/{r['state'].lower()}/{sl}", _d(row[0]) if row else mod))
+    return _urlset(e)
+
+
+@app.route("/sitemap-guides.xml")
+def sitemap_guides():
+    d = get_db(); base = app.config["DOMAIN"]; mod = _site_mod()
+    e = []
+    for r in d.execute("SELECT slug, generated_at FROM guides"):
+        e.append((f"{base}/guides/{r['slug']}", _d(r["generated_at"]) or mod))
+    return _urlset(e)
+
+
+@app.route("/sitemap-listings.xml")
+def sitemap_listings():
+    """Only index-worthy listings (gated) — the core thin-content recovery fix."""
+    d = get_db(); base = app.config["DOMAIN"]
+    e = []
+    for r in d.execute(
+            "SELECT slug, scraped_at FROM listings WHERE rating IS NOT NULL "
+            "AND website IS NOT NULL AND website!='' AND reviews >= ? "
+            "ORDER BY reviews DESC", (INDEX_MIN_REVIEWS,)):
+        e.append((f"{base}/listing/{r['slug']}", _d(r["scraped_at"])))
+    return _urlset(e)
 
 
 @app.route("/favicon.ico")
@@ -418,7 +632,11 @@ def favicon():
 
 @app.route("/robots.txt")
 def robots():
-    txt = (f"User-agent: *\nAllow: /\n"
+    txt = (f"User-agent: *\n"
+           f"Allow: /\n"
+           f"Disallow: /search\n"
+           f"Disallow: /*?sort=\n"
+           f"Disallow: /*?q=\n"
            f"Sitemap: {app.config['DOMAIN']}/sitemap.xml\n")
     return Response(txt, mimetype="text/plain")
 

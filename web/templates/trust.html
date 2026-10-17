@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} | {{ SITE_NAME }}{% endblock %}
+{% block description %}{{ page.intro }}{% endblock %}
+{% block canonical %}{{ DOMAIN }}/{{ slug }}{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-br from-primary to-gradient text-white">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <nav class="text-sm text-white/70 mb-3"><a href="/" class="hover:text-white">Home</a> / <span class="text-white">{{ page.title }}</span></nav>
+    <h1 class="text-3xl md:text-4xl font-extrabold">{{ page.title }}</h1>
+    <p class="mt-2 text-white/90">{{ page.intro }}</p>
+  </div>
+</div>
+
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  {% for heading, html in page.sections %}
+  <section class="mb-8">
+    <h2 class="text-xl font-bold text-gray-900 mb-3">{{ heading|safe }}</h2>
+    <div class="text-gray-700 leading-relaxed space-y-3 [&_a]:text-primary [&_a:hover]:underline">{{ html|safe }}</div>
+  </section>
+  {% endfor %}
+  <p class="text-xs text-gray-400 mt-10 border-t pt-6">National Dentist Directory is an independent directory of public dental-practice information and does not provide medical or dental advice.</p>
+</div>
+{% endblock %}

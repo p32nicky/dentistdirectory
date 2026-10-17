@@ -1,21 +1,23 @@
 {% extends "base.html" %}
 {% from "_macros.html" import card, stars %}
-{% block title %}{{ l.name }} — {{ l.city }}, {{ l.state }} | {{ SITE_NAME }}{% endblock %}
-{% block description %}{{ l.name }} in {{ l.city }}, {{ l.state }}{% if l.rating %} — rated {{ "%.1f"|format(l.rating) }}/5 from {{ l.reviews }} reviews{% endif %}. {{ l.category }}. Read reviews and contact them directly.{% endblock %}
-{% block canonical %}/listing/{{ l.slug }}{% endblock %}
+{% block title %}{{ l.name }} — {{ l.category }} in {{ l.city }}, {{ l.state }} | {{ SITE_NAME }}{% endblock %}
+{% block description %}{{ l.name }} is a {{ l.category|lower }} in {{ l.city }}, {{ l.state }}{% if l.address %} at {{ l.address }}{% endif %}.{% if l.phone %} Call {{ l.phone|trim }} or get directions, hours and patient reviews.{% else %} See location, directions and patient reviews.{% endif %}{% endblock %}
+{% block canonical %}{{ DOMAIN }}/listing/{{ l.slug }}{% endblock %}
+{% block robots %}{% if indexable %}index, follow{% else %}noindex, follow{% endif %}{% endblock %}
 
 {% block content %}
 <div class="bg-gradient-to-br from-primary to-gradient text-white">
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <nav class="text-sm text-white/70 mb-4"><a href="/" class="hover:text-white">Home</a> / <a href="/{{ l.state|lower }}/{{ cat_slug(l.city) }}" class="hover:text-white">{{ l.city }}, {{ l.state }}</a> / <span class="text-white">{{ l.name }}</span></nav>
+    <nav class="text-sm text-white/70 mb-4"><a href="/" class="hover:text-white">Home</a> / <a href="/state/{{ l.state|lower }}" class="hover:text-white">{{ STATE_NAMES.get(l.state, l.state) }}</a> / <a href="/{{ l.state|lower }}/{{ cat_slug(l.city) }}" class="hover:text-white">{{ l.city }}</a> / <span class="text-white">{{ l.name }}</span></nav>
     <div class="flex items-start gap-4">
       {% if l.website %}<img src="https://www.google.com/s2/favicons?domain={{ l.website }}&sz=128" class="w-16 h-16 rounded-xl bg-white p-1" alt="" onerror="this.style.display='none'">{% endif %}
       <div>
         <h1 class="text-3xl font-extrabold">{{ l.name }}</h1>
-        <div class="mt-2 flex items-center gap-3 text-white/90">
-          {% if l.rating %}<span>{{ stars(l.rating) }} <b>{{ "%.1f"|format(l.rating) }}</b> ({{ l.reviews }} reviews)</span>{% endif %}
-          <span class="px-2.5 py-0.5 rounded-full bg-white/15 text-sm">{{ l.category }}</span>
+        <div class="mt-2 flex flex-wrap items-center gap-3 text-white/90">
+          {% if l.rating %}<span>{{ stars(l.rating) }} <b>{{ "%.1f"|format(l.rating) }}</b> <span class="text-white/70">({{ l.reviews }} Google reviews)</span></span>{% endif %}
+          <a href="/category/{{ cat_slug(l.category) }}" class="px-2.5 py-0.5 rounded-full bg-white/15 text-sm hover:bg-white/25">{{ l.category }}</a>
         </div>
+        {% if last_updated %}<p class="text-xs text-white/60 mt-2">Listing last updated {{ last_updated }}</p>{% endif %}
       </div>
     </div>
   </div>
@@ -23,19 +25,54 @@
 
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid md:grid-cols-3 gap-8">
   <div class="md:col-span-2 space-y-8">
-    {% if copy and copy.intro %}
-    <section class="prose max-w-none"><p class="text-gray-700 leading-relaxed">{{ copy.intro }}</p></section>
-    {% else %}
-    <p class="text-gray-700 leading-relaxed">{{ l.name }} provides {{ l.category|lower }} services in {{ l.city }}, {{ l.state }}. Contact them directly to book service.</p>
+    <!-- About this practice (unique, data-driven) -->
+    <section>
+      <h2 class="text-xl font-extrabold mb-3">About {{ l.name }}</h2>
+      {% if copy and copy.intro %}
+      <p class="text-gray-700 leading-relaxed">{{ copy.intro }}</p>
+      {% else %}
+      <p class="text-gray-700 leading-relaxed">{{ l.name }} is a {{ l.category|lower }}{% if l.address %} located at <strong>{{ l.address }}</strong>{% else %} serving {{ l.city }}, {{ l.state }}{% endif %}.{% if l.rating %} The practice holds a {{ "%.1f"|format(l.rating) }}-star rating from {{ l.reviews }} Google reviews.{% endif %} {% if l.phone %}To book an appointment or ask about services, call <a href="tel:{{ l.phone|trim }}" class="text-primary font-semibold">{{ l.phone|trim }}</a>.{% endif %}{% if l.website %} You can also visit their <a href="{{ l.website }}" target="_blank" rel="nofollow noopener" class="text-primary">website</a> for more information.{% endif %}</p>
+      {% endif %}
+    </section>
+
+    {% if specialty %}
+    <section class="bg-primary/5 border border-primary/10 rounded-2xl p-5">
+      <h2 class="text-lg font-bold mb-2">What does a {{ l.category|lower }} do?</h2>
+      <p class="text-gray-700 text-sm leading-relaxed">{{ specialty }}</p>
+    </section>
     {% endif %}
 
-    {% if copy and copy.faq %}
+    <!-- Location map (unique per listing) -->
+    {% if l.lat and l.lng %}
+    <section>
+      <h2 class="text-xl font-extrabold mb-3">Location &amp; directions</h2>
+      {% if l.address %}<p class="text-gray-700 mb-3"><i class="fas fa-location-dot text-primary mr-1"></i> {{ l.address }}</p>{% endif %}
+      <div class="rounded-2xl overflow-hidden border border-gray-200">
+        <iframe title="Map of {{ l.name }}" width="100%" height="300" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+          src="https://maps.google.com/maps?q={{ l.lat }},{{ l.lng }}&z=15&output=embed"></iframe>
+      </div>
+      <a href="https://maps.google.com/maps/dir/?api=1&destination={{ l.lat }},{{ l.lng }}" target="_blank" rel="noopener" class="inline-block mt-3 text-primary font-semibold text-sm hover:underline"><i class="fas fa-diamond-turn-right mr-1"></i> Get directions</a>
+    </section>
+    {% endif %}
+
+    <!-- FAQ (data-driven, unique per listing) -->
+    {% set faqs = (copy.faq if copy and copy.faq else faq) %}
+    {% if faqs %}
     <section>
       <h2 class="text-xl font-extrabold mb-4">Frequently asked questions</h2>
       <div class="space-y-3">
-        {% for f in copy.faq %}
+        {% for f in faqs %}
         <details class="bg-white border rounded-xl p-4"><summary class="font-semibold cursor-pointer">{{ f.q }}</summary><p class="mt-2 text-gray-600 text-sm">{{ f.a }}</p></details>
         {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if other_specialties %}
+    <section>
+      <h2 class="text-xl font-extrabold mb-3">Other dental specialties in {{ l.city }}</h2>
+      <div class="flex flex-wrap gap-2">
+        {% for c in other_specialties %}<a href="/category/{{ cat_slug(c.category) }}" class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:border-primary hover:text-primary bg-white"><i class="fa-solid {{ CATEGORY_ICONS.get(c.category,'fa-tooth') }} text-xs"></i>{{ c.category }} ({{ c.n }})</a>{% endfor %}
       </div>
     </section>
     {% endif %}
@@ -44,36 +81,50 @@
     <section>
       <h2 class="text-xl font-extrabold mb-4">More dentists in {{ l.city }}</h2>
       <div class="grid sm:grid-cols-2 gap-4">{% for n in nearby %}{{ card(n) }}{% endfor %}</div>
+      <a href="/{{ l.state|lower }}/{{ cat_slug(l.city) }}" class="inline-block mt-4 text-primary font-semibold text-sm hover:underline">See all dentists in {{ l.city }}, {{ l.state }} &rarr;</a>
     </section>
     {% endif %}
   </div>
 
   <aside class="space-y-4">
     <div class="bg-white border rounded-2xl p-5 sticky top-20">
-      <h3 class="font-bold mb-3">Contact</h3>
+      <h2 class="font-bold mb-3">Contact {{ l.name }}</h2>
       <ul class="space-y-3 text-sm">
         {% if l.address %}<li><i class="fas fa-location-dot text-primary w-5"></i> {{ l.address }}</li>{% endif %}
-        {% if l.phone %}<li><i class="fas fa-phone text-primary w-5"></i> <a href="tel:{{ l.phone }}" class="text-primary font-semibold">{{ l.phone }}</a></li>{% endif %}
-        {% if l.website %}<li><i class="fas fa-globe text-primary w-5"></i> <a href="{{ l.website }}" target="_blank" rel="nofollow noopener" class="text-primary break-all">Website</a></li>{% endif %}
+        {% if l.phone %}<li><i class="fas fa-phone text-primary w-5"></i> <a href="tel:{{ l.phone|trim }}" class="text-primary font-semibold">{{ l.phone|trim }}</a></li>{% endif %}
+        {% if l.website %}<li><i class="fas fa-globe text-primary w-5"></i> <a href="{{ l.website }}" target="_blank" rel="nofollow noopener" class="text-primary break-all">Visit website</a></li>{% endif %}
       </ul>
       <div class="grid gap-2 mt-4">
-        {% if l.phone %}<a href="tel:{{ l.phone }}" class="bg-primary hover:bg-primaryDark text-white text-center font-semibold py-2.5 rounded-xl"><i class="fas fa-phone mr-1"></i> Call now</a>{% endif %}
+        {% if l.phone %}<a href="tel:{{ l.phone|trim }}" class="bg-primary hover:bg-primaryDark text-white text-center font-semibold py-2.5 rounded-xl"><i class="fas fa-phone mr-1"></i> Call now</a>{% endif %}
         {% if l.lat and l.lng %}<a href="https://maps.google.com/maps/dir/?api=1&destination={{ l.lat }},{{ l.lng }}" target="_blank" rel="noopener" class="border text-center font-semibold py-2.5 rounded-xl hover:border-primary hover:text-primary"><i class="fas fa-diamond-turn-right mr-1"></i> Directions</a>{% endif %}
-        {% if l.website %}<a href="{{ l.website }}" target="_blank" rel="nofollow noopener" class="border text-center font-semibold py-2.5 rounded-xl hover:border-primary hover:text-primary"><i class="fas fa-globe mr-1"></i> Visit website</a>{% endif %}
       </div>
+      <p class="text-xs text-gray-400 mt-4">Ratings and reviews shown are sourced from public Google Business Profiles. Always confirm services and hours with the office directly.</p>
     </div>
   </aside>
 </div>
 
 <script type="application/ld+json">
 {
-  "@context":"https://schema.org","@type":"LocalBusiness",
-  "name":{{ l.name|tojson }},"telephone":{{ (l.phone or "")|tojson }},
-  {% if l.website %}"url":{{ l.website|tojson }},{% endif %}
-  "address":{"@type":"PostalAddress","addressLocality":{{ l.city|tojson }},"addressRegion":{{ l.state|tojson }}}
-  {% if l.rating %},"aggregateRating":{"@type":"AggregateRating","ratingValue":"{{ l.rating }}","reviewCount":"{{ l.reviews or 0 }}"}{% endif %}
+  "@context":"https://schema.org","@type":"Dentist",
+  "name":{{ l.name|tojson }},
+  "url":"{{ DOMAIN }}/listing/{{ l.slug }}",
+  {% if l.phone %}"telephone":{{ l.phone|trim|tojson }},{% endif %}
+  {% set _same = [] %}{% if l.website %}{% set _same = _same + [l.website] %}{% endif %}{% if l.maps_url %}{% set _same = _same + [l.maps_url] %}{% endif %}
+  {% if _same %}"sameAs":{{ _same|tojson }},{% endif %}
+  {% if l.lat and l.lng %}"geo":{"@type":"GeoCoordinates","latitude":{{ l.lat }},"longitude":{{ l.lng }}},
+  "hasMap":"https://maps.google.com/maps?q={{ l.lat }},{{ l.lng }}",{% endif %}
+  {% if l.rating and l.reviews %}"aggregateRating":{"@type":"AggregateRating","ratingValue":"{{ l.rating }}","reviewCount":"{{ l.reviews }}","bestRating":"5","worstRating":"1"},{% endif %}
+  "areaServed":{{ (l.city~", "~l.state)|tojson }},
+  "medicalSpecialty":{{ l.category|tojson }},
+  "address":{"@type":"PostalAddress",{% if l.address %}"streetAddress":{{ l.address|tojson }},{% endif %}"addressLocality":{{ l.city|tojson }},"addressRegion":{{ l.state|tojson }},"addressCountry":"US"}
 }
 </script>
+{% if faqs %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{% for f in faqs %}{"@type":"Question","name":{{ f.q|tojson }},"acceptedAnswer":{"@type":"Answer","text":{{ f.a|tojson }}}}{{ "," if not loop.last }}{% endfor %}]}
+</script>
+{% endif %}
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
 {"@type":"ListItem","position":1,"name":"Home","item":"{{ DOMAIN }}/"},

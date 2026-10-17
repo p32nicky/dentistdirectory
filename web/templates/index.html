@@ -2,7 +2,7 @@
 {% from "_macros.html" import card %}
 {% block title %}Find a Dentist Near You — {{ "{:,}".format(total) }}+ Top-Rated Dentists | {{ SITE_NAME }}{% endblock %}
 {% block description %}Search {{ "{:,}".format(total) }}+ dentists across the US. Compare general dentists, orthodontists, oral surgeons, pediatric dentists and more by reviews, ratings and location. Find your dentist today.{% endblock %}
-{% block canonical %}/{% endblock %}
+{% block canonical %}{{ DOMAIN }}/{% endblock %}
 
 {% block content %}
 <!-- Hero Section (exact reference structure) -->
@@ -39,7 +39,7 @@
           <ul class="space-y-1">
             {% for c in cats %}
             <li><a href="/category/{{ cat_slug(c.category) }}" class="flex items-center justify-between text-sm text-gray-700 hover:text-primary py-1.5">
-              <span><i class="fa-solid {{ CATEGORY_ICONS.get(c.category,'fa-bug') }} mr-2 text-primary/70 w-4"></i>{{ c.category }}</span>
+              <span><i class="fa-solid {{ CATEGORY_ICONS.get(c.category,'fa-tooth') }} mr-2 text-primary/70 w-4"></i>{{ c.category }}</span>
               <span class="text-gray-400">{{ c.n }}</span></a></li>
             {% endfor %}
           </ul>

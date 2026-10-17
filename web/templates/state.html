@@ -2,7 +2,7 @@
 {% from "_macros.html" import card %}
 {% block title %}Top-Rated Dentists in {{ name }} — {{ "{:,}".format(total) }} Local Dentists | {{ SITE_NAME }}{% endblock %}
 {% block description %}Find dentists & dentists across {{ name }}. Browse {{ total }} practices in {{ cities|length }} cities with reviews and ratings.{% endblock %}
-{% block canonical %}/state/{{ st|lower }}{% endblock %}
+{% block canonical %}{{ DOMAIN }}/state/{{ st|lower }}{% endblock %}
 
 {% block content %}
 <div class="bg-gradient-to-br from-primary to-gradient text-white">

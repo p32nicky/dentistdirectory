@@ -51,7 +51,7 @@
         </p>
         <!-- Description -->
         <p class="text-gray-600 text-sm mb-4 line-clamp-2">
-          {{ l.category or 'Dentists' }} services in {{ l.city }}, {{ l.state }}. Trusted local dentists offering inspections, treatment and prevention. Call for service and fast response.
+          {{ l.category or 'Dentist' }} in {{ l.city }}, {{ l.state }}.{% if l.address %} {{ l.address }}.{% endif %}
         </p>
         <!-- Contact + metrics -->
         <div class="flex items-center justify-between text-xs mb-3">
